@@ -1,0 +1,93 @@
+-- basic
+-- SELECT * FROM products;
+-- SELECT id, name, price FROM products;
+-- SELECT id AS product_id, name AS product_name, price FROM products;
+
+-- filtering
+-- SELECT * FROM products WHERE id = 10;
+-- SELECT * FROM products WHERE inventory = 0;
+-- SELECT * FROM products WHERE name = 'tv';
+
+-- operators
+-- SELECT * FROM products WHERE price > 80;
+-- SELECT * FROM products WHERE price >= 80;
+-- SELECT * FROM products WHERE inventory != 0;
+-- or
+-- SELECT * FROM products WHERE inventory <> 0;
+
+-- multiple operators
+-- SELECT * FROM products WHERE inventory <> 0 AND price > 20;
+-- SELECT * FROM products WHERE price > 100 OR price < 20;
+
+-- in and not in
+-- SELECT * FROM products WHERE id = 1 OR id = 2 OR id = 3;
+-- SELECT * FROM products WHERE id IN (1,2,3);
+-- SELECT * FROM products WHERE id NOT IN (1,2,3);
+
+-- like and not like
+-- here  % wildcard represents zero or more characters, and _ (underscore) represents exactly one character — any character.
+-- SELECT * FROM products WHERE name LIKE 'tv%';
+-- SELECT * FROM products WHERE name LIKE '%e';
+-- SELECT * FROM products WHERE name NOT LIKE 'tv%';
+-- SELECT * FROM products WHERE name NOT LIKE '%e';
+
+-- order by
+-- default in asc
+-- SELECT * FROM products ORDER BY price;
+-- SELECT * FROM products ORDER BY price DESC;
+-- order cascading
+-- SELECT * FROM products ORDER BY inventory DESC, price ASC;
+
+-- where with order by (chaining)
+-- SELECT * FROM products WHERE price >= 50 ORDER BY created_at DESC;
+
+-- limit
+-- SELECT * FROM products ORDER BY price LIMIT 5;
+
+-- skipping in limit
+-- SELECT * FROM products ORDER BY id LIMIT 10;
+-- SELECT * FROM products ORDER BY id LIMIT 5 OFFSET 2;	--skips first two rows
+
+
+
+
+
+
+-- adding entries
+
+--insert
+-- INSERT INTO products (name, price, inventory) VALUES ('tortolla',4, 1000);
+-- SELECT * FROM products WHERE name='tortolla';
+
+-- return the newly created item detail(row) 
+-- INSERT INTO products (name, price, inventory) VALUES ('monitor',400, 1000) RETURNING *;
+
+-- insert more than one row 
+-- INSERT INTO products (name, price, inventory) VALUES ('tortilla',4, 1000), ('table', 60, 100), ('laptop', 600, 100) RETURNING *;
+
+
+
+
+-- delete entries
+
+-- DELETE FROM products WHERE id = 21;
+-- select * from products;
+
+-- return the deleted item
+-- DELETE FROM products WHERE id < 8 RETURNING *;
+
+
+-- delete multiple entries
+-- DELETE FROM products WHERE inventory = 0 RETURNING *;
+
+
+
+-- updating
+-- UPDATE products SET name = 'Soda', price = 4 WHERE id = 11;
+-- select * from products;
+
+-- returning the updated item(s)
+-- UPDATE products SET name = 'SoDa', price = 4 WHERE id = 11 RETURNING id, name, price;
+
+-- updating multiple rows
+-- UPDATE products SET is_sale = true WHERE id > 11 RETURNING *;
