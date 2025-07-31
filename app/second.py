@@ -7,7 +7,7 @@ import time
 from . import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
-from typing import cast, List
+from typing import cast
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -35,7 +35,7 @@ def root():
 
 # --------------------------------------------create a post----------------------
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
@@ -53,7 +53,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 # --------------------------------------------get all posts----------------------
 
-@app.get("/posts", response_model=List[schemas.PostResponse])
+@app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute('''SELECT * FROM posts''')
     # posts = cursor.fetchall()
@@ -69,7 +69,7 @@ def get_latest_post():
     return {"data": [post]}
 
 # --------------------------------------------get a post by id----------------------
-@app.get("/posts/{id}", response_model=schemas.PostResponse)
+@app.get("/posts/{id}")
 def get_post(id: int, db: Session = Depends(get_db)):          # automatic validation and good error message if validation fails instead of showing crashing error messages
     # # print(id)
     # # print(type(id))
@@ -108,7 +108,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     
 # --------------------------------------------create a post----------------------
 
-@app.put("/posts/{id}", status_code=status.HTTP_200_OK,response_model=schemas.PostResponse)
+@app.put("/posts/{id}", status_code=status.HTTP_200_OK)
 def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # print(post)
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
