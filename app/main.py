@@ -1,25 +1,17 @@
 # fastapi dev main.py --reload
 # uvicorn main:app --reload
 from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi import Body
-from pydantic import BaseModel
-from typing import Optional
-from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from . import models
+from . import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
+from typing import cast
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-class Post(BaseModel):
-    title: str  # required
-    content: str  # required
-    published: bool = True  # optional (default is True)    
 
 # database connection (psycopg)
 while True:
@@ -44,7 +36,7 @@ def root():
 # --------------------------------------------create a post----------------------
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
     # cursor.execute(''' INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * ''', (post.title, post.content, post.published))
@@ -117,7 +109,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 # --------------------------------------------create a post----------------------
 
 @app.put("/posts/{id}", status_code=status.HTTP_200_OK)
-def update_post(id: int, new_post: Post, db: Session = Depends(get_db)):
+def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # print(post)
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
     # updated_post = cursor.fetchone()
@@ -132,7 +124,7 @@ def update_post(id: int, new_post: Post, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id={id} not found")
     
     # post_query.update({'title':'hey this is my updated title', 'content': 'this is my updated content'}, synchronize_session=False)
-    post_query.update(new_post.model_dump(), synchronize_session=False)
+    post_query.update(cast(dict, new_post.model_dump()), synchronize_session=False)
     db.commit()
     updated_post = db.query(models.Tweet).filter(models.Tweet.id == id).first()
     return {'data': updated_post}
