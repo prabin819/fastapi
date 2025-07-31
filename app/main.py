@@ -14,9 +14,7 @@ app = FastAPI()
 class Post(BaseModel):
     title: str  # required
     content: str  # required
-    published: bool = True  # optional (default is True)
-    rating: Optional[int] = None    # fully optional field
-    
+    published: bool = True  # optional (default is True)    
 
 # database connection
 while True:
@@ -35,46 +33,28 @@ my_posts = [{"id": 1, "title": "title of post 1", "content": "this is content of
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to python fast API!!!!!!"}
+    return {"message": "Welcome to python fast API with postgres!!!!!!"}
 
-
-# @app.get("/posts")
-# def get_posts():
-#     return {"data": "This is your posts."}
-
-# @app.post("/createposts")
-# def create_posts(payLoad: dict = Body(...)):
-#     print(payLoad)
-#     return {"new_post": f"title: {payLoad['title']} content: {payLoad['content']}"}
-
-# @app.post("/createposts")
-# def create_posts(new_post: Post):
-#     print(new_post)
-#     print(type(new_post))
-#     print(new_post.model_dump())    # print(new_post.dict())
-#     print(new_post.title)
-#     print(new_post.content)
-#     print(new_post.published)
-#     print(new_post.rating)
-#     return {"data": new_post}
 
 # --------------------------------------------create a post----------------------
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    # print(post)
-    # print(post.model_dump())    # doesnt change the original post
-    # print(post)
-    post_dict = post.model_dump()
-    post_dict['id'] = randrange(0, 100000)
-    my_posts.append(post_dict)
-    return {"data": post_dict}
+    # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
+    #above method will technically work but is vunerable to sql injection
+    cursor.execute(''' INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * ''', (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"data": new_post}
 
 # --------------------------------------------get all posts----------------------
 
 @app.get("/posts")
 def get_posts():
-    return {"data": my_posts}
+    cursor.execute('''SELECT * FROM posts''')
+    posts = cursor.fetchall()
+    # print(posts)
+    return {"data": posts}
 
 # --------------------------------------------get latest post----------------------
 @app.get("/posts/latest")       # important : order of routes matters here
@@ -85,23 +65,12 @@ def get_latest_post():
 # --------------------------------------------get a post by id----------------------
 @app.get("/posts/{id}")
 def get_post(id: int):          # automatic validation and good error message if validation fails instead of showing crashing error messages
-    print(id)
-    print(type(id))
-    # post = [post for post in my_posts if post["id"] == id]   # [expression for item in iterable if condition]
-    post = next((post for post in my_posts if post["id"] == id), None)
+    # print(id)
+    # print(type(id))
+    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (id,))
+    post = cursor.fetchone()
     if not post:
-        # response.status_code = 404
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {"message": f"post with id: {id} was not found"}
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {id} was not found")
-    
-    
-    # or
-    # filter(function, iterable)
-    # list(filter(lambda post: post["id"] == 2, posts))
-    # so
-    # post = list(filter(lambda post: post["id"] == id, posts))
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id={id} not found")
     return {"data": post}
 
 
@@ -110,38 +79,22 @@ def get_post(id: int):          # automatic validation and good error message if
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    # # method one:
-    # global my_posts
-    # my_posts = [post for post in my_posts if post["id"]!= id]
-    
-    # method two:
-    # find the index in the array that has required id
-    # my_posts.pop(index)
-    for i, post in enumerate(my_posts):
-        if post["id"] == id:
-            del my_posts[i]
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-        
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (id,))
+    delete_post = cursor.fetchone()
+    conn.commit()
+    if not delete_post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
-    # # method 3
-    # # from gpt
-    # index = next((i for i, post in enumerate(my_posts) if post["id"] == id), None)
-    # if index is None:
-    #     raise HTTPException(status_code=404, detail="Post not found")
-    # my_posts.pop(index)
-    # return {"message": "Post deleted successfully"}
-    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
     
 # --------------------------------------------create a post----------------------
 
 @app.put("/posts/{id}", status_code=status.HTTP_200_OK)
-def update_post(id: int, new_post: Post):
-    new_post_dict = new_post.model_dump()
-    new_post_dict["id"] = id
-    for i, post in enumerate(my_posts):
-        if post["id"] == id:
-            my_posts[i] = new_post_dict
-            return {"data": new_post_dict}
-        
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+def update_post(id: int, post: Post):
+    print(post)
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
+    updated_post = cursor.fetchone()
+    conn.commit()
+    if updated_post == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    return {"data": updated_post}
