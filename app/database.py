@@ -8,6 +8,13 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL) # The engine is resposible for e
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)# to actually talk to the database, we make use of the session
 Base = declarative_base()
 
+# declarative_base() is a function provided by SQLAlchemy that creates a base class for your database models to inherit from.
+
+# Why we need it
+# In SQLAlchemy's Object Relational Mapping (ORM), we define tables as Python classes.
+
+# But for those classes to be recognized by SQLAlchemy as tables, they must inherit from a special base class — and that's what declarative_base() gives you.
+
 # dependency
 def get_db():
     db = SessionLocal()
