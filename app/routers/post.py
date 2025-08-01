@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import cast, List
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts"
+)
 
 # --------------------------------------------create a post----------------------
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
@@ -26,7 +28,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 # --------------------------------------------get all posts----------------------
 
-@router.get("/posts", response_model=List[schemas.PostResponse])
+@router.get("/", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute('''SELECT * FROM posts''')
     # posts = cursor.fetchall()
@@ -42,7 +44,7 @@ def get_posts(db: Session = Depends(get_db)):
 #     return {"data": [post]}
 
 # --------------------------------------------get a post by id----------------------
-@router.get("/posts/{id}", response_model=schemas.PostResponse)
+@router.get("/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):          # automatic validation and good error message if validation fails instead of showing crashing error messages
     # # print(id)
     # # print(type(id))
@@ -63,7 +65,7 @@ def get_post(id: int, db: Session = Depends(get_db)):          # automatic valid
 
 # --------------------------------------------delete----------------------
 
-@router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     # cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (id,))
     # delete_post = cursor.fetchone()
@@ -81,7 +83,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     
 # --------------------------------------------create a post----------------------
 
-@router.put("/posts/{id}", status_code=status.HTTP_200_OK,response_model=schemas.PostResponse)
+@router.put("/{id}", status_code=status.HTTP_200_OK,response_model=schemas.PostResponse)
 def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # print(post)
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
