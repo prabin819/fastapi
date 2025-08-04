@@ -12,7 +12,7 @@ router = APIRouter(
 # --------------------------------------------create a post----------------------
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
-def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
     # cursor.execute(''' INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * ''', (post.title, post.content, post.published))
@@ -21,7 +21,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_i
     
     # print(post.model_dump())
     # new_post = models.Tweet(title=post.title, content=post.content, published=post.published)
-    print(user_id)
+    print(current_user)
     new_post = models.Tweet(**post.model_dump())
     db.add(new_post)
     db.commit()
