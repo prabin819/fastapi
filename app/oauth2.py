@@ -28,7 +28,7 @@ def verify_access_token(token: str, credentials_exception):
         # Decode the JWT using the same secret and algorithm
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         # Optional: Extract specific data from payload
-        id: str = payload.get("user_id") # type: ignore
+        id: int = payload.get("user_id") # type: ignore
         
         if id is None:
             raise credentials_exception
@@ -49,3 +49,5 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     return verify_access_token(token, credentials_exception)
     # we can pass this as a dependency into any one of our path operations. and when we do that, what its going to do is, its going to take the token from the request automatically, extract the id for us. its going to verify that the token is correct by calling the verify access token. And then its going to extract the id. and then if we want to, we can have it automatically fetch the user from the db and then add it into as a parameter into our path operation function.
+    
+    

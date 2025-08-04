@@ -1,0 +1,62 @@
+about exp
+    
+    here to_encode.update({"exp": expire}) is just the info on the payload, right? or it really sets the expiration of the token to that time
+
+
+ChatGPT said:
+Excellent question — and you're absolutely right to be curious.
+
+✅ Short Answer:
+Yes, this line:
+
+python
+Copy
+Edit
+to_encode.update({"exp": expire})
+is just setting the "exp" field in the JWT payload.
+
+But — and here’s the key — when you later call:
+
+python
+Copy
+Edit
+jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+the JWT library (python-jose) treats "exp" as a special claim and uses it to set the actual expiration of the token.
+
+🔍 Behind the scenes:
+python-jose (and the JWT spec) recognizes certain standard claims like:
+
+"exp" – expiration time
+
+"nbf" – not before
+
+"iat" – issued at
+
+"sub" – subject (often user ID)
+
+These claims aren’t just arbitrary — they are used during verification.
+
+So, even though you're just adding a key to a dictionary:
+
+python
+Copy
+Edit
+{"sub": "user@example.com", "exp": <datetime>}
+When jwt.decode() is later called, it will automatically check:
+
+python
+Copy
+Edit
+if current_time > payload["exp"]:
+    raise ExpiredSignatureError
+✅ So in effect:
+You control token expiration by setting "exp" in the payload.
+
+The JWT library enforces expiration when decoding/verifying.
+
+Bonus Tip:
+To avoid issues, make sure "exp" is either:
+
+A Unix timestamp (number of seconds since epoch), or
+
+A datetime object that the JWT library knows how to convert (which python-jose does correctly with aware datetimes).

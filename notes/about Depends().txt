@@ -1,0 +1,62 @@
+What is Depends()?
+Depends() is a FastAPI utility used to declare dependencies — shared logic that can be reused across routes. It's part of FastAPI's Dependency Injection system.
+
+✅ Use cases:
+Authentication
+
+Database session management
+
+Request validation
+
+Role checking
+
+Reusable services (e.g., pagination, query filtering)
+
+🧠 Basic Concept
+You write a function (the dependency), and FastAPI automatically calls it and injects the result into your route.
+
+🔧 Simple Example
+python
+Copy
+Edit
+from fastapi import FastAPI, Depends
+
+app = FastAPI()
+
+# This is a dependency function
+def get_name():
+    return "Prabin"
+
+# This route uses the dependency
+@app.get("/hello")
+def say_hello(name: str = Depends(get_name)):
+    return {"message": f"Hello, {name}!"}
+🔄 What happens behind the scenes:
+FastAPI sees Depends(get_name)
+
+It calls get_name()
+
+Takes the return value "Prabin" and injects it into name
+
+Result: {"message": "Hello, Prabin!"}
+
+💡 Realistic Example: Auth
+python
+Copy
+Edit
+from fastapi import HTTPException, status
+
+def get_current_user(token: str = "dummy_token"):  # Normally you'd get token from request
+    if token != "dummy_token":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    return {"username": "prabin"}
+
+@app.get("/profile")
+def read_profile(user: dict = Depends(get_current_user)):
+    return {"user": user}
+🧠 Summary
+Feature	What Depends() does
+Reuse logic	Share functions across routes
+Declarative	No need to call dependency functions manually
+Flexible	Supports parameters, type hints, async/await
+Common use cases	Auth, DB sessions, validation, config injection

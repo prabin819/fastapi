@@ -12,7 +12,7 @@ router = APIRouter(
 # --------------------------------------------create a post----------------------
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
-def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), get_current_user: int = Depends(oauth2.get_current_user)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
     # cursor.execute(''' INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * ''', (post.title, post.content, post.published))
@@ -21,6 +21,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), get_cu
     
     # print(post.model_dump())
     # new_post = models.Tweet(title=post.title, content=post.content, published=post.published)
+    print(user_id)
     new_post = models.Tweet(**post.model_dump())
     db.add(new_post)
     db.commit()
@@ -67,7 +68,7 @@ def get_post(id: int, db: Session = Depends(get_db)):          # automatic valid
 # --------------------------------------------delete----------------------
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(id: int, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (id,))
     # delete_post = cursor.fetchone()
     # conn.commit()
@@ -85,7 +86,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 # --------------------------------------------create a post----------------------
 
 @router.put("/{id}", status_code=status.HTTP_200_OK,response_model=schemas.PostResponse)
-def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # print(post)
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
     # updated_post = cursor.fetchone()
