@@ -12,7 +12,7 @@ router = APIRouter(
 # --------------------------------------------create a post----------------------
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
-def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     # # cursor.execute(f"INSERT INTO posts (title, content, published) VALUES ({post.title}, {post.content}, {post.published})")
     # #above method will technically work but is vunerable to sql injection
     # cursor.execute(''' INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * ''', (post.title, post.content, post.published))
@@ -22,7 +22,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
     # print(post.model_dump())
     # new_post = models.Tweet(title=post.title, content=post.content, published=post.published)
     print(current_user)
-    new_post = models.Tweet(**post.model_dump())
+    new_post = models.Tweet(owner_id = current_user.id, **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -68,15 +68,18 @@ def get_post(id: int, db: Session = Depends(get_db)):          # automatic valid
 # --------------------------------------------delete----------------------
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def delete_post(id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     # cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (id,))
     # delete_post = cursor.fetchone()
     # conn.commit()
     
     post_query = db.query(models.Tweet).filter(models.Tweet.id == id)
     post = post_query.first()
-    if post== None:
+    if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id={id} not found")
+    
+    if (post.owner_id != current_user.id):  # type: ignore
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform the requested action.")
     
     post_query.delete(synchronize_session=False)
     db.commit()
@@ -86,7 +89,7 @@ def delete_post(id: int, db: Session = Depends(get_db), user_id: int = Depends(o
 # --------------------------------------------create a post----------------------
 
 @router.put("/{id}", status_code=status.HTTP_200_OK,response_model=schemas.PostResponse)
-def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     # print(post)
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",(post.title, post.content, post.published, id))
     # updated_post = cursor.fetchone()
@@ -99,6 +102,9 @@ def update_post(id: int, new_post: schemas.PostCreate, db: Session = Depends(get
     post = post_query.first()
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id={id} not found")
+    
+    if (post.owner_id != current_user.id):  # type: ignore
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform the requested action.")
     
     # post_query.update({'title':'hey this is my updated title', 'content': 'this is my updated content'}, synchronize_session=False)
     post_query.update(cast(dict, new_post.model_dump()), synchronize_session=False)
