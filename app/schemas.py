@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 
@@ -46,3 +46,7 @@ class PostResponse(PostBase):
     class Config:
         orm_mode = True
         
+        
+class Vote(BaseModel):
+    post_id: int
+    dir: int = Field(..., ge=0, le=1)  # Only allows 0 or 1
