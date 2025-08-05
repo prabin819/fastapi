@@ -2,7 +2,7 @@ from .. import models, schemas, oauth2
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from ..database import get_db
-from typing import cast, List
+from typing import cast, List, Optional
 
 router = APIRouter(
     prefix="/posts",
@@ -31,12 +31,14 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
 # --------------------------------------------get all posts----------------------
 
 @router.get("/", response_model=List[schemas.PostResponse])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # cursor.execute('''SELECT * FROM posts''')
     # posts = cursor.fetchall()
     # print(posts)
-    posts = db.query(models.Tweet).all()
+    # posts = db.query(models.Tweet).all()
+    posts = db.query(models.Tweet).filter(models.Tweet.title.contains(search)).limit(limit).offset(skip).all()
     # print(posts)
+    print(limit)
     return posts
 
 # --------------------------------------------get latest post----------------------
