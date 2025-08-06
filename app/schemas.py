@@ -50,3 +50,7 @@ class PostResponse(PostBase):
 class Vote(BaseModel):
     post_id: int
     dir: int = Field(..., ge=0, le=1)  # Only allows 0 or 1
+    
+class PostWithVotes(BaseModel):
+    post: PostResponse
+    noOfVotes: int

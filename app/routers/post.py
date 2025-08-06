@@ -1,6 +1,7 @@
 from .. import models, schemas, oauth2
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from ..database import get_db
 from typing import cast, List, Optional
 
@@ -30,16 +31,32 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
 
 # --------------------------------------------get all posts----------------------
 
-@router.get("/", response_model=List[schemas.PostResponse])
+# @router.get("/")
+@router.get("/", response_model=List[schemas.PostWithVotes])
 def get_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # cursor.execute('''SELECT * FROM posts''')
     # posts = cursor.fetchall()
     # print(posts)
     # posts = db.query(models.Tweet).all()
-    posts = db.query(models.Tweet).filter(models.Tweet.title.contains(search)).limit(limit).offset(skip).all()
+    
+    # posts = db.query(models.Tweet).filter(models.Tweet.title.contains(search)).limit(limit).offset(skip).all()
+    # no_of_votes_query = db.query(models.Tweet).join(models.Vote, models.Vote.post_id == models.Tweet.id, isouter=True)
+    # print(no_of_votes_query)    #SELECT tweets.id AS tweets_id, tweets.title AS tweets_title, tweets.content AS tweets_content, tweets.published AS tweets_published, tweets.created_at AS tweets_created_at, tweets.owner_id AS tweets_owner_id FROM tweets LEFT OUTER JOIN votes ON votes.post_id = tweets.id
+    
+    # no_of_votes_query = db.query(models.Tweet, func.count(models.Vote.post_id).label("noOfVotes")).join(models.Vote, models.Vote.post_id == models.Tweet.id, isouter=True).group_by(models.Tweet.id)   #SELECT tweets.id AS tweets_id, tweets.title AS tweets_title, tweets.content AS tweets_content, tweets.published AS tweets_published, tweets.created_at AS tweets_created_at, tweets.owner_id AS tweets_owner_id, count(votes.post_id) AS noOfVotes FROM tweets LEFT OUTER JOIN votes ON votes.post_id = tweets.id GROUP BY tweets.id
+    results = db.query(models.Tweet, func.count(models.Vote.post_id).label("noOfVotes")).join(models.Vote, models.Tweet.id == models.Vote.post_id , isouter=True).group_by(models.Tweet.id).filter(models.Tweet.title.contains(search)).limit(limit).offset(skip).all()   #SELECT tweets.id AS tweets_id, tweets.title AS tweets_title, tweets.content AS tweets_content, tweets.published AS tweets_published, tweets.created_at AS tweets_created_at, tweets.owner_id AS tweets_owner_id, count(votes.post_id) AS noOfVotes FROM tweets LEFT OUTER JOIN votes ON votes.post_id = tweets.id GROUP BY tweets.id
+    # print(no_of_votes_query)
+    # results = no_of_votes_query.all()
+    response = [{"post": result[0], "noOfVotes": result[1]} for result in results]
+    return response  # ✅ FastAPI can now serialize this
+    
+    #inner join by default when we just say join
+    # outerjoin() → LEFT OUTER JOIN
+    # join(..., isouter=True) → also creates a LEFT OUTER JOIN
+    
     # print(posts)
-    print(limit)
-    return posts
+    # print(limit)
+    # return posts
 
 # --------------------------------------------get latest post----------------------
 # @router.get("/posts/latest")       # important : order of routes matters here
