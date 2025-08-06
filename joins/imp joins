@@ -1,0 +1,28 @@
+-- SELECT * FROM tweets LEFT JOIN users ON tweets.owner_id = users.id
+-- SELECT title, content, email FROM tweets LEFT JOIN users ON tweets.owner_id = users.id
+-- SELECT tweets.id, title, content, email FROM tweets LEFT JOIN users ON tweets.owner_id = users.id
+-- SELECT tweets.*, email FROM tweets LEFT JOIN users ON tweets.owner_id = users.id
+
+-- evaluate no of post based on user:-
+
+-- select users.id, count(*) as numOfTweets from tweets left join users on tweets.owner_id = users.id group by users.id
+-- select users.id, count(*) as numOfTweets from tweets right join users on tweets.owner_id = users.id group by users.id
+
+
+	-- imp note: always use a coloumn name inside count.
+	-- if you use *, even null row (all row fields null after joining) is counted as 1.
+	-- so, always use a coloumn name
+
+	
+-- select users.id, count(tweets.id) as numOfTweets from tweets right join users on tweets.owner_id = users.id group by users.id
+
+-- votes:-
+-- select * from votes
+-- select * from tweets
+-- select * from tweets left join votes on tweets.id = votes.post_id
+
+-- this is the final query:-
+-- select tweets.*, count(votes.post_id) as no_of_votes from tweets left join votes on tweets.id = votes.post_id group by id
+
+-- to get no of votes on a particuler post/tweet, just add where :-
+-- select tweets.*, count(votes.post_id) as no_of_votes from tweets left join votes on tweets.id = votes.post_id where tweets.id = 2 group by id
